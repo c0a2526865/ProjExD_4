@@ -247,11 +247,13 @@ class Shield(pg.sprite.Sprite):
     こうかとんの前に防御壁を出すクラス
     """
     def __init__(self, bird: Bird, life: int = 400):
-        super().__init__()
-        self.life = life
+        super().__init__() # Spriteクラスのイニシャライザを呼び出す
+        self.life = life # 防御壁の残り表示時間
 
-        # 防御壁の画像を作る
+        # 防御壁の画像（青い矩形）を生成
         self.image = pg.Surface((20, bird.rect.height * 2), pg.SRCALPHA)
+
+        # 青色の矩形を描画 
         pg.draw.rect(
             self.image,
             (0, 0, 255),
@@ -272,6 +274,9 @@ class Shield(pg.sprite.Sprite):
         )
 
     def update(self):
+        """
+        防御壁の残り時間を更新し，時間切れになったら削除する
+        """
         self.life -= 1
         if self.life < 0:
             self.kill()
@@ -288,6 +293,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    shields = pg.sprite.Group() # shieldsグループを追加
 
     tmr = 0
     clock = pg.time.Clock()
@@ -298,7 +304,11 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
-        screen.blit(bg_img, [0, 0])
+            # zキー押下で防御壁を生成
+            if event.type == pg.KEYDOWN and event.key == pg.K_z: # イベントはzキーを伸ばしたらシールドを使う
+                if score.value > 50 and len(shields) == 0: # スコアが50より大，かつ防御壁が存在しない場合のみ発動
+                    shields.add(Shield(bird, 400))
+                    score.value -= 50 # 10点ダウン
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
@@ -317,13 +327,20 @@ def main():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
 
+        # 防御壁と衝突した爆弾を削除
+        for shield, bomb_lst in pg.sprite.groupcollide(shields, bombs, False, True).items():
+            for bomb in bomb_lst:
+                exps.add(Explosion(bomb, 50))    
+
         for bomb in pg.sprite.spritecollide(bird, bombs, True):  # こうかとんと衝突した爆弾リスト
             bird.change_img(8, screen)  # こうかとん悲しみエフェクト
             score.update(screen)
             pg.display.update()
             time.sleep(2)
             return
+        
 
+        screen.blit(bg_img, [0, 0])
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
@@ -334,6 +351,8 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        shields.update() # 防御壁の状態を更新
+        shields.draw(screen) # 防御壁を描画
         pg.display.update()
         tmr += 1
         clock.tick(50)
