@@ -247,6 +247,10 @@ class Gravity(pg.sprite.Sprite):
     スコアを消費して画面全体を覆う重力場を発生させるクラス
     """
     def __init__(self, life):
+        """
+        重力場Surfaceを生成する
+        引数 life：重力場の持続時間（フレーム数）
+        """
         super().__init__()
         self.image = pg.Surface((WIDTH, HEIGHT))
         pg.draw.rect(self.image, (0, 0, 0),(0, 0, WIDTH, HEIGHT))
@@ -257,6 +261,10 @@ class Gravity(pg.sprite.Sprite):
         
         
     def update(self):
+        """
+        重力場の残り時間を1減らし，
+        持続時間が終了したら削除する
+        """
         self.life -= 1
         if self.life < 0:
             self.kill()
@@ -286,8 +294,8 @@ def main():
                 beams.add(Beam(bird))
             
             if event.type == pg.KEYDOWN and event.key == pg.K_x and score.value >= 200:
-                gravities.add(Gravity(400))
-                score.value -= 200
+                gravities.add(Gravity(400)) # 重力場を400フレーム発生
+                score.value -= 200  # スコアを200消費
             
         screen.blit(bg_img, [0, 0])
 
@@ -307,12 +315,12 @@ def main():
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():  # ビームと衝突した爆弾リスト
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
-
+        # 重力場と衝突した敵機を撃破
         for emy in pg.sprite.groupcollide(emys, gravities, True, False).keys():
             exps.add(Explosion(emy, 100))
             score.value += 10
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
-        
+        # 重力場と衝突した爆弾を消去
         for bomb in pg.sprite.groupcollide(bombs, gravities, True, False).keys():
             exps.add(Explosion(bomb, 50))
             score.value += 1
@@ -323,9 +331,10 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
-
+        # 重力場の更新・描画 先頭に置かないとすべて黒くなるため注意
         gravities.update()
         gravities.draw(screen)
+        
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
