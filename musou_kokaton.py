@@ -148,7 +148,7 @@ class Beam(pg.sprite.Sprite):
         """
         super().__init__()
         self.vx, self.vy = bird.dire
-        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle = math.degrees(math.atan2(-self.vy, self.vx)) + angle0 # angle0を追加する
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"), angle, 1.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -171,8 +171,8 @@ class NeoBeam:
     複数方向にビームを生成するクラス
     """
     def __init__(self, bird: Bird, num: int):
-        self.bird = bird # ビームを発射するこうかとん
-        self.num = num # 生成するビーム数
+        self.bird = bird  # ビームを発射するこうかとん
+        self.num = num  # 生成するビーム数
     def gen_beams(self) -> list[Beam]:
         """
         -50度から+50度の範囲で複数のBeamを生成する
@@ -281,7 +281,10 @@ def main():
             if event.type == pg.QUIT:
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beams.add(Beam(bird))
+                if key_lst[pg.K_LSHIFT]: # 左Shiftキーを押しながらスペースキーで弾幕を発射
+                    beams.add(*NeoBeam(bird, 5).gen_beams()) # 5方向のビームをBeamグループに追加
+                else: # スペースキーのみ押下
+                    beams.add(Beam(bird)) # 通常のビームを発射
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
